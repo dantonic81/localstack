@@ -8,13 +8,14 @@ import json
 # Initialize the S3 client
 s3 = boto3.client('s3', endpoint_url='http://localhost:4566', region_name='us-east-1')
 
-# Set your S3 bucket and file names
-bucket_name = 'my-terraform-bucket'
+# Set your new S3 bucket and file names for the landing data lake
+landing_bucket_name = 'landing'
+prod_bucket_name = 'prod'
 csv_file_key = 'transactions.csv'
 pdf_file_key = 'invoice.pdf'
 
 # Download the CSV file from S3 to local
-s3.download_file(bucket_name, csv_file_key, '/tmp/transactions.csv')
+s3.download_file(landing_bucket_name, csv_file_key, '/tmp/transactions.csv')
 
 # Read the CSV file into a pandas DataFrame
 csv_data = pd.read_csv('/tmp/transactions.csv')
@@ -43,13 +44,13 @@ print(csv_data.head())
 parquet_file_path = '/tmp/cleaned_transactions.parquet'
 csv_data.to_parquet(parquet_file_path, index=False)
 
-# Step 2: Upload the Parquet file to S3
-s3.upload_file(parquet_file_path, bucket_name, 'cleaned_transactions.parquet')
+# Step 2: Upload the Parquet file to the prod data lake S3 bucket
+s3.upload_file(parquet_file_path, prod_bucket_name, 'cleaned_transactions.parquet')
 
-print("\nCleaned CSV data uploaded to S3 as Parquet.")
+print("\nCleaned CSV data uploaded to prod data lake as Parquet.")
 
 # Download the PDF file from S3 to local
-s3.download_file(bucket_name, pdf_file_key, '/tmp/invoice.pdf')
+s3.download_file(landing_bucket_name, pdf_file_key, '/tmp/invoice.pdf')
 
 # Convert the PDF to images using pdf2image
 pages = convert_from_path('/tmp/invoice.pdf', 300)
@@ -91,7 +92,7 @@ pdf_json_file_path = '/tmp/extracted_pdf_data.json'
 with open(pdf_json_file_path, 'w') as json_file:
     json.dump(pdf_data, json_file)
 
-# Step 4: Upload the JSON file to S3
-s3.upload_file(pdf_json_file_path, bucket_name, 'extracted_pdf_data.json')
+# Step 4: Upload the JSON file to the prod data lake S3 bucket
+s3.upload_file(pdf_json_file_path, prod_bucket_name, 'extracted_pdf_data.json')
 
-print("\nExtracted PDF data uploaded to S3 as JSON.")
+print("\nExtracted PDF data uploaded to prod data lake as JSON.")
