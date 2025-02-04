@@ -8,15 +8,30 @@ provider "aws" {
   }
 }
 
-resource "aws_s3_bucket" "my_bucket" {
-  bucket = "my-terraform-bucket"
+# Staging (Landing) bucket
+resource "aws_s3_bucket" "landing_bucket" {
+  bucket = "landing"
 }
 
-resource "aws_s3_bucket_acl" "my_bucket_acl" {
-  bucket = aws_s3_bucket.my_bucket.id
+resource "aws_s3_bucket_acl" "landing_bucket_acl" {
+  bucket = aws_s3_bucket.landing_bucket.id
   acl    = "private"
 }
 
-output "bucket_name" {
-  value = aws_s3_bucket.my_bucket.bucket
+# Production bucket
+resource "aws_s3_bucket" "prod_bucket" {
+  bucket = "prod"
+}
+
+resource "aws_s3_bucket_acl" "prod_bucket_acl" {
+  bucket = aws_s3_bucket.prod_bucket.id
+  acl    = "private"
+}
+
+output "landing_bucket_name" {
+  value = aws_s3_bucket.landing_bucket.bucket
+}
+
+output "prod_bucket_name" {
+  value = aws_s3_bucket.prod_bucket.bucket
 }
