@@ -4,5 +4,7 @@
 
 - AWS CLI
 - Terraform
+- tesseract-ocr
+- poppler-utils
 
 ## Introduction
