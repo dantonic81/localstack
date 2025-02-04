@@ -1,0 +1,2 @@
+localstack==4.1.0
+terraform-local==0.20.1
