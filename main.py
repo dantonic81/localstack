@@ -3,6 +3,7 @@ import pandas as pd
 import re
 from pdf2image import convert_from_path
 import pytesseract
+import json
 
 # Initialize the S3 client
 s3 = boto3.client('s3', endpoint_url='http://localhost:4566', region_name='us-east-1')
@@ -35,10 +36,17 @@ csv_data['amount'] = csv_data['amount'].apply(pd.to_numeric, errors='coerce')
 # Example: Removing rows where 'Amount' is 0
 csv_data = csv_data[csv_data['amount'] != 0]
 
-
-
 print("\nCSV Data After Cleaning:")
 print(csv_data.head())
+
+# Step 1: Convert cleaned CSV data to Parquet
+parquet_file_path = '/tmp/cleaned_transactions.parquet'
+csv_data.to_parquet(parquet_file_path, index=False)
+
+# Step 2: Upload the Parquet file to S3
+s3.upload_file(parquet_file_path, bucket_name, 'cleaned_transactions.parquet')
+
+print("\nCleaned CSV data uploaded to S3 as Parquet.")
 
 # Download the PDF file from S3 to local
 s3.download_file(bucket_name, pdf_file_key, '/tmp/invoice.pdf')
@@ -71,7 +79,19 @@ amounts = re.findall(r'\$\d+(?:\.\d{2})?', clean_pdf_text)
 print("\nExtracted Invoice Number:", invoice_number)
 print("\nExtracted Amounts:", amounts)
 
-# Example of structuring the cleaned PDF text (if needed for later processing)
-# You could now integrate this data back into your system or continue cleaning.
+# Structure extracted PDF data in a dictionary for uploading
+pdf_data = {
+    "invoice_number": invoice_number,
+    "amounts": amounts,
+    "raw_text": clean_pdf_text
+}
 
-# You can now upload the transformed CSV and processed text back to S3 or other systems.
+# Step 3: Save the extracted PDF data as a JSON file locally
+pdf_json_file_path = '/tmp/extracted_pdf_data.json'
+with open(pdf_json_file_path, 'w') as json_file:
+    json.dump(pdf_data, json_file)
+
+# Step 4: Upload the JSON file to S3
+s3.upload_file(pdf_json_file_path, bucket_name, 'extracted_pdf_data.json')
+
+print("\nExtracted PDF data uploaded to S3 as JSON.")
